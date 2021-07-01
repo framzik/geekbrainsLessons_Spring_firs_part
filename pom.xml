@@ -20,6 +20,7 @@
         <module>lesson-1-servlet-api</module>
         <module>lesson-02-spring-basics</module>
         <module>lesson-03-spring-mvc</module>
+        <module>lesson-4-spring-boot</module>
     </modules>
 
 
