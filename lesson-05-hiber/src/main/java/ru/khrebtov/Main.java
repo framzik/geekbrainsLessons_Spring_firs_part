@@ -1,23 +1,24 @@
 package ru.khrebtov;
 
-import ru.khrebtov.persist.Product;
-import ru.khrebtov.persist.ProductDao;
+import org.hibernate.cfg.Configuration;
+import ru.khrebtov.repository.EntityManagerFactoryConfig;
+import ru.khrebtov.repository.ProductRepository;
+import ru.khrebtov.service.ShopService;
+
+import javax.persistence.EntityManagerFactory;
 
 public class Main {
 
     public static void main(String[] args) {
-        ProductDao dao = new ProductDao();
 
-        dao.saveOrUpdate(new Product("car", 10d));
-        dao.saveOrUpdate(new Product("car", 20d));
-        dao.saveOrUpdate(new Product("car", 30d));
+        EntityManagerFactory emFactory = new Configuration()
+                .configure("hibernate.cfg.xml")
+                .buildSessionFactory();
+        EntityManagerFactoryConfig config = new EntityManagerFactoryConfig(emFactory);
 
-        System.out.println(dao.findAll());
-        System.out.println(dao.findById(3L));
-        dao.deleteById(3L);
-        System.out.println(dao.findAll());
-        dao.saveOrUpdate(new Product(2L, "moto", 600d));
-        dao.saveOrUpdate(new Product("moto", 600d));
-        System.out.println(dao.findAll());
+        ShopService service = new ShopService(config);
+
+        service.findProductsByUserId(2L).forEach(System.out::println);
+        service.findUsersByProductId(1L).forEach(System.out::println);
     }
 }

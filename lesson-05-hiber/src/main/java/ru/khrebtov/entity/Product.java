@@ -1,9 +1,10 @@
-package ru.khrebtov.persist;
+package ru.khrebtov.entity;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
-@Table(name = "product")
+@Table(name = "products")
 @NamedQueries(
         {
                 @NamedQuery(name = "getAllProducts", query = "select p from Product p")
@@ -21,6 +22,14 @@ public class Product {
     @Column(name = "cost")
     private double cost;
 
+    @ManyToMany
+    @JoinTable(
+            name = "products_users",
+            joinColumns = @JoinColumn(name = "products_id"),
+            inverseJoinColumns = @JoinColumn(name = "users_id")
+    )
+    private List<User> users;
+
     public Product() {
     }
 
@@ -33,6 +42,12 @@ public class Product {
         this(title, cost);
 
         this.id = id;
+    }
+
+    public Product(Long id, String title, double cost, List<User> users) {
+        this(id, title, cost);
+
+        this.users = users;
     }
 
     public Long getId() {
@@ -57,6 +72,14 @@ public class Product {
 
     public void setCost(double cost) {
         this.cost = cost;
+    }
+
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(List<User> users) {
+        this.users = users;
     }
 
     @Override

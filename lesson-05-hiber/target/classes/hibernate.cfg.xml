@@ -18,8 +18,9 @@
         <property name="hibernate.format_sql">true</property>
         <property name="hibernate.jdbc.batch_size">10</property>
 
-        <mapping class="ru.khrebtov.persist.Product"/>
+        <mapping class="ru.khrebtov.entity.Product"/>
         <mapping class="ru.khrebtov.entity.User"/>
         <mapping class="ru.khrebtov.entity.Contact"/>
+        <mapping class="ru.khrebtov.entity.ProductUser"/>
     </session-factory>
 </hibernate-configuration>
