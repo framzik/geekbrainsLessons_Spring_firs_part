@@ -3,6 +3,8 @@ package ru.khrebtov.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,8 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import ru.khrebtov.persist.User;
 import ru.khrebtov.persist.UserRepository;
+import ru.khrebtov.persist.UserSpecifications;
 
 import javax.validation.Valid;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/user")
@@ -28,10 +32,32 @@ public class UserController {
     }
 
     @GetMapping
-    public String listPage(Model model) {
+    public String listPage(Model model,
+                           @RequestParam("usernameFilter") Optional<String> usernameFilter,
+                           @RequestParam("minAge") Optional<Integer> minAge,
+                           @RequestParam("maxAge") Optional<Integer> maxAge,
+                           @RequestParam("page") Optional<Integer> page,
+                           @RequestParam("size") Optional<Integer> size) {
         logger.info("User list page requested");
 
-        model.addAttribute("users", userRepository.findAll());
+//        List<User> users = userRepository.filterUsers(
+//                usernameFilter.orElse(null),
+//                minAge.orElse(null),
+//                maxAge.orElse(null));
+
+        Specification<User> spec = Specification.where(null);
+        if (usernameFilter.isPresent() && !usernameFilter.get().isBlank()) {
+            spec = spec.and(UserSpecifications.usernamePrefix(usernameFilter.get()));
+        }
+        if (minAge.isPresent()) {
+            spec = spec.and(UserSpecifications.minAge(minAge.get()));
+        }
+        if (maxAge.isPresent()) {
+            spec = spec.and(UserSpecifications.maxAge(maxAge.get()));
+        }
+
+        model.addAttribute("users", userRepository.findAll(spec,
+                PageRequest.of(page.orElse(1) - 1, size.orElse(3))));
         return "users";
     }
 
@@ -66,6 +92,14 @@ public class UserController {
 //        }
 
         userRepository.save(user);
+        return "redirect:/user";
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteUser(@PathVariable("id") Long id) {
+        logger.info("Deleting user with id {}", id);
+
+        userRepository.deleteById(id);
         return "redirect:/user";
     }
 
