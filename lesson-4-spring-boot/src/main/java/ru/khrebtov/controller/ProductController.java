@@ -3,17 +3,19 @@ package ru.khrebtov.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import ru.khrebtov.persist.Product;
 import ru.khrebtov.persist.ProductRepository;
+import ru.khrebtov.persist.ProductSpecification;
+
+import java.util.Optional;
 
 @Controller
-@RequestMapping(value = "/products")
+@RequestMapping(value = "/product")
 public class ProductController {
     private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
@@ -25,9 +27,23 @@ public class ProductController {
     }
 
     @GetMapping
-    public String listPage(Model model) {
+    public String listPage(Model model,
+                           @RequestParam("minCost") Optional<Integer> minCost,
+                           @RequestParam("maxCost") Optional<Integer> maxCost,
+                           @RequestParam("page") Optional<Integer> page,
+                           @RequestParam("size") Optional<Integer> size) {
         logger.info("Product list page requested");
-        model.addAttribute("products", productRepository.findAll());
+        Specification<Product> spec = Specification.where(null);
+
+        if (minCost.isPresent()) {
+            spec = spec.and(ProductSpecification.minCost(minCost.get()));
+        }
+        if (maxCost.isPresent()) {
+            spec = spec.and(ProductSpecification.maxCost(maxCost.get()));
+        }
+
+        model.addAttribute("products", productRepository.findAll(spec,
+                PageRequest.of(page.orElse(1) - 1, size.orElse(10))));
 
         return "products";
     }
@@ -51,16 +67,16 @@ public class ProductController {
     @PostMapping
     public String update(Product product) {
         logger.info("Saving product");
-        productRepository.insert(product);
+        productRepository.save(product);
 
-        return "redirect:/products";
+        return "redirect:/product";
     }
 
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable("id") Long id, Model model){
+    public String delete(@PathVariable("id") Long id, Model model) {
         logger.info("Deleting product");
-        productRepository.delete(id);
+        productRepository.deleteById(id);
 
-        return "redirect:/products";
+        return "redirect:/product";
     }
 }
