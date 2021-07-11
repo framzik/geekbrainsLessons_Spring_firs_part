@@ -7,11 +7,10 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @NamedQueries({
-                      @NamedQuery(name = "allUsers", query = "select u from User u"),
-                      @NamedQuery(name = "userWithAgeBetween",
-                                  query = "select u from User u where u.age between :min and :max"),
-                      @NamedQuery(name = "countUsers", query = "select count(u) from User u")
-              })
+        @NamedQuery(name = "allUsers", query = "select u from User u"),
+        @NamedQuery(name = "userWithAgeBetween", query = "select u from User u where u.age between :min and :max"),
+        @NamedQuery(name = "countUsers", query = "select count(u) from User u")
+})
 public class User {
 
     @Id
@@ -27,13 +26,11 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Contact> contacts = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(
-            name = "products_users",
-            joinColumns = @JoinColumn(name = "users_id"),
-            inverseJoinColumns = @JoinColumn(name = "products_id")
-    )
-    private List<Product> products = new ArrayList<>();
+    @OneToMany(mappedBy = "user")
+    private List<LineItem> lineItems;
+
+//    @ManyToMany(mappedBy = "users")
+//    private List<Product> products = new ArrayList<>();
 
     public User() {
     }
@@ -42,13 +39,6 @@ public class User {
         this.id = id;
         this.username = username;
         this.age = age;
-    }
-
-    public User(Long id, String username, Integer age, List<Contact> contacts,
-                List<Product> products) {
-        this(id, username, age);
-
-        this.products = products;
     }
 
     public Long getId() {
@@ -88,12 +78,21 @@ public class User {
         contacts.add(contact);
     }
 
-    public List<Product> getProducts() {
-        return products;
+//    public List<Product> getProducts() {
+//        return products;
+//    }
+//
+//    public void setProducts(List<Product> products) {
+//        this.products = products;
+//    }
+
+
+    public List<LineItem> getLineItems() {
+        return lineItems;
     }
 
-    public void setProducts(List<Product> products) {
-        this.products = products;
+    public void setLineItems(List<LineItem> lineItems) {
+        this.lineItems = lineItems;
     }
 
     @Override

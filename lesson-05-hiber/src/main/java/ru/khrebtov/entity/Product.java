@@ -1,6 +1,7 @@
 package ru.khrebtov.entity;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
@@ -16,38 +17,32 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "title")
+    @Column
     private String title;
 
-    @Column(name = "cost")
-    private double cost;
+    @Column
+    private BigDecimal price;
 
-    @ManyToMany
-    @JoinTable(
-            name = "products_users",
-            joinColumns = @JoinColumn(name = "products_id"),
-            inverseJoinColumns = @JoinColumn(name = "users_id")
-    )
-    private List<User> users;
+    @OneToMany(mappedBy = "product")
+    private List<LineItem> lineItems;
+
+//    @ManyToMany
+//    @JoinTable(
+//            name = "line_item",
+//            joinColumns = { @JoinColumn(name = "product_id",
+//                    foreignKey = @ForeignKey(name = "fk_line_item_product"))},
+//            inverseJoinColumns = { @JoinColumn(name = "user_id",
+//                    foreignKey = @ForeignKey(name = "fk_line_item_user"))}
+//    )
+//    private List<User> users;
 
     public Product() {
     }
 
-    public Product(String title, double cost) {
-        this.title = title;
-        this.cost = cost;
-    }
-
-    public Product(Long id, String title, double cost) {
-        this(title, cost);
-
+    public Product(Long id, String title, BigDecimal price) {
         this.id = id;
-    }
-
-    public Product(Long id, String title, double cost, List<User> users) {
-        this(id, title, cost);
-
-        this.users = users;
+        this.title = title;
+        this.price = price;
     }
 
     public Long getId() {
@@ -66,28 +61,28 @@ public class Product {
         this.title = title;
     }
 
-    public double getCost() {
-        return cost;
+    public BigDecimal getPrice() {
+        return price;
     }
 
-    public void setCost(double cost) {
-        this.cost = cost;
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 
-    public List<User> getUsers() {
-        return users;
+//    public List<User> getUsers() {
+//        return users;
+//    }
+//
+//    public void setUsers(List<User> users) {
+//        this.users = users;
+//    }
+
+
+    public List<LineItem> getLineItems() {
+        return lineItems;
     }
 
-    public void setUsers(List<User> users) {
-        this.users = users;
-    }
-
-    @Override
-    public String toString() {
-        return "{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", cost=" + cost +
-                '}';
+    public void setLineItems(List<LineItem> lineItems) {
+        this.lineItems = lineItems;
     }
 }
