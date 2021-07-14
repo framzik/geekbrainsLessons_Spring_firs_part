@@ -3,7 +3,9 @@ package ru.khrebtov.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,8 +33,10 @@ public class ProductController {
                            @RequestParam("minCost") Optional<Integer> minCost,
                            @RequestParam("maxCost") Optional<Integer> maxCost,
                            @RequestParam("page") Optional<Integer> page,
-                           @RequestParam("size") Optional<Integer> size) {
+                           @RequestParam("size") Optional<Integer> size,
+                           @RequestParam("sortField") Optional<String> sortField) {
         logger.info("Product list page requested");
+
         Specification<Product> spec = Specification.where(null);
 
         if (minCost.isPresent()) {
@@ -42,8 +46,16 @@ public class ProductController {
             spec = spec.and(ProductSpecification.maxCost(maxCost.get()));
         }
 
-        model.addAttribute("products", productRepository.findAll(spec,
-                PageRequest.of(page.orElse(1) - 1, size.orElse(10))));
+        if (sortField.isEmpty() || sortField.get().isEmpty()) {
+            sortField = Optional.of("id");
+        }
+
+        Page<Product> productPage = productRepository.findAll(spec, PageRequest.of(page.orElse(1) - 1,
+                size.orElse(5), Sort.by(sortField.get())));
+
+        model.addAttribute("products", productPage);
+        model.addAttribute("prevPageNumber", productPage.hasPrevious() ? productPage.previousPageable().getPageNumber() + 1 : -1);
+        model.addAttribute("nextPageNumber", productPage.hasNext() ? productPage.nextPageable().getPageNumber() + 1 : -1);
 
         return "products";
     }
