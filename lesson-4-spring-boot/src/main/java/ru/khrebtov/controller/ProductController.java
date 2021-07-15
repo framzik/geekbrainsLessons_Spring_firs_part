@@ -3,59 +3,37 @@ package ru.khrebtov.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 import ru.khrebtov.persist.Product;
-import ru.khrebtov.persist.ProductRepository;
-import ru.khrebtov.persist.ProductSpecification;
+import ru.khrebtov.persist.User;
+import ru.khrebtov.service.ProductService;
 
-import java.util.Optional;
+import javax.validation.Valid;
 
 @Controller
 @RequestMapping(value = "/product")
 public class ProductController {
+
     private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
-    private final ProductRepository productRepository;
+    private final ProductService productService;
 
     @Autowired
-    public ProductController(ProductRepository productRepository) {
-        this.productRepository = productRepository;
+    public ProductController(ProductService productService) {
+        this.productService = productService;
     }
 
     @GetMapping
     public String listPage(Model model,
-                           @RequestParam("minCost") Optional<Integer> minCost,
-                           @RequestParam("maxCost") Optional<Integer> maxCost,
-                           @RequestParam("page") Optional<Integer> page,
-                           @RequestParam("size") Optional<Integer> size,
-                           @RequestParam("sortField") Optional<String> sortField) {
+                           ProductListParam productListParam) {
         logger.info("Product list page requested");
 
-        Specification<Product> spec = Specification.where(null);
-
-        if (minCost.isPresent()) {
-            spec = spec.and(ProductSpecification.minCost(minCost.get()));
-        }
-        if (maxCost.isPresent()) {
-            spec = spec.and(ProductSpecification.maxCost(maxCost.get()));
-        }
-
-        if (sortField.isEmpty() || sortField.get().isEmpty()) {
-            sortField = Optional.of("id");
-        }
-
-        Page<Product> productPage = productRepository.findAll(spec, PageRequest.of(page.orElse(1) - 1,
-                size.orElse(5), Sort.by(sortField.get())));
-
-        model.addAttribute("products", productPage);
-        model.addAttribute("prevPageNumber", productPage.hasPrevious() ? productPage.previousPageable().getPageNumber() + 1 : -1);
-        model.addAttribute("nextPageNumber", productPage.hasNext() ? productPage.nextPageable().getPageNumber() + 1 : -1);
+        model.addAttribute("products", productService.findWithFilter(productListParam));
 
         return "products";
     }
@@ -69,26 +47,39 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public String editUser(@PathVariable("id") Long id, Model model) {
+    public String editProduct(@PathVariable("id") Long id, Model model) {
         logger.info("Edit product page requested");
-        model.addAttribute("product", productRepository.findById(id));
+        model.addAttribute("product", productService.findById(id));
 
         return "product_form";
     }
 
     @PostMapping
-    public String update(Product product) {
+    public String update(@Valid Product product,  BindingResult result) {
         logger.info("Saving product");
-        productRepository.save(product);
+
+        if (result.hasErrors()) {
+            return "product_form";
+        }
+
+        productService.save(product);
 
         return "redirect:/product";
     }
 
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable("id") Long id, Model model) {
+    public String delete(@PathVariable("id") Long id) {
         logger.info("Deleting product");
-        productRepository.deleteById(id);
+        productService.deleteById(id);
 
         return "redirect:/product";
+    }
+
+    @ExceptionHandler
+    public ModelAndView notFoundExceptionHandler(NotFoundException ex) {
+        ModelAndView modelAndView = new ModelAndView("not_found");
+        modelAndView.addObject("message", ex.getMessage());
+        modelAndView.setStatus(HttpStatus.NOT_FOUND);
+        return modelAndView;
     }
 }
