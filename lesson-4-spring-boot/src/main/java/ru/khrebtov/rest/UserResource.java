@@ -34,12 +34,12 @@ public class UserResource {
     @GetMapping(path = "/{id}", produces = "application/json")
     public User findById(@PathVariable("id") Long id) {
         return userService.findById(id)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+                          .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
     @PostMapping(produces = "application/json")
     public User create(@RequestBody User user) {
-        if (user.getId() != null) {
+        if (user.getId() != -1) {
             throw new BadRequestException("User Id should be null");
         }
         userService.save(user);
@@ -58,5 +58,4 @@ public class UserResource {
     public void delete(@PathVariable("id") Long id) {
         userService.deleteById(id);
     }
-
 }
