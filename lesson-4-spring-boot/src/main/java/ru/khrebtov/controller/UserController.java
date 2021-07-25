@@ -49,12 +49,12 @@ public class UserController {
         logger.info("Edit user page requested");
 
         model.addAttribute("user", userService.findById(id)
-                .orElseThrow(() -> new NotFoundException("User not found")));
+                                              .orElseThrow(() -> new NotFoundException("User not found")));
         return "user_form";
     }
 
     @PostMapping
-    public String update(@Valid User user, BindingResult result) {
+    public String update(@Valid UserDto user, BindingResult result) {
         logger.info("Saving user");
 
         if (result.hasErrors()) {
