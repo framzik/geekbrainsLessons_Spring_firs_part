@@ -1,8 +1,22 @@
 package ru.khrebtov.persist;
 
+import javax.persistence.*;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+
+@Entity
+@Table(name = "products")
 public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
+    @NotBlank
     private String title;
+
+    @Min(value = 0)
+    @Column(nullable = false)
     private double cost;
 
     public Product() {

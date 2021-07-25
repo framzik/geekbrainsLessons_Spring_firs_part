@@ -3,31 +3,37 @@ package ru.khrebtov.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 import ru.khrebtov.persist.Product;
-import ru.khrebtov.persist.ProductRepository;
+import ru.khrebtov.persist.User;
+import ru.khrebtov.service.ProductService;
+
+import javax.validation.Valid;
 
 @Controller
-@RequestMapping(value = "/products")
+@RequestMapping(value = "/product")
 public class ProductController {
+
     private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
-    private final ProductRepository productRepository;
+    private final ProductService productService;
 
     @Autowired
-    public ProductController(ProductRepository productRepository) {
-        this.productRepository = productRepository;
+    public ProductController(ProductService productService) {
+        this.productService = productService;
     }
 
     @GetMapping
-    public String listPage(Model model) {
+    public String listPage(Model model,
+                           ProductListParam productListParam) {
         logger.info("Product list page requested");
-        model.addAttribute("products", productRepository.findAll());
+
+        model.addAttribute("products", productService.findWithFilter(productListParam));
 
         return "products";
     }
@@ -41,26 +47,39 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public String editUser(@PathVariable("id") Long id, Model model) {
+    public String editProduct(@PathVariable("id") Long id, Model model) {
         logger.info("Edit product page requested");
-        model.addAttribute("product", productRepository.findById(id));
+        model.addAttribute("product", productService.findById(id));
 
         return "product_form";
     }
 
     @PostMapping
-    public String update(Product product) {
+    public String update(@Valid Product product,  BindingResult result) {
         logger.info("Saving product");
-        productRepository.insert(product);
 
-        return "redirect:/products";
+        if (result.hasErrors()) {
+            return "product_form";
+        }
+
+        productService.save(product);
+
+        return "redirect:/product";
     }
 
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable("id") Long id, Model model){
+    public String delete(@PathVariable("id") Long id) {
         logger.info("Deleting product");
-        productRepository.delete(id);
+        productService.deleteById(id);
 
-        return "redirect:/products";
+        return "redirect:/product";
+    }
+
+    @ExceptionHandler
+    public ModelAndView notFoundExceptionHandler(NotFoundException ex) {
+        ModelAndView modelAndView = new ModelAndView("not_found");
+        modelAndView.addObject("message", ex.getMessage());
+        modelAndView.setStatus(HttpStatus.NOT_FOUND);
+        return modelAndView;
     }
 }
