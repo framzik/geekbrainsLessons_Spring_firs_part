@@ -7,33 +7,40 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import ru.khrebtov.controller.RoleDto;
 import ru.khrebtov.controller.UserDto;
 import ru.khrebtov.controller.UserListParams;
+import ru.khrebtov.persist.RoleRepository;
 import ru.khrebtov.persist.User;
 import ru.khrebtov.persist.UserRepository;
 import ru.khrebtov.persist.UserSpecifications;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository,
-                           PasswordEncoder passwordEncoder) {
+                           RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public List<UserDto> findAll() {
         return userRepository.findAll().stream()
-                             .map(user -> new UserDto(user.getId(), user.getUsername(), user.getAge()))
+                             .map(user -> new UserDto(user.getId(),
+                                                      user.getUsername(),
+                                                      user.getAge()))
                              .collect(Collectors.toList());
     }
 
@@ -64,7 +71,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<UserDto> findById(Long id) {
         return userRepository.findById(id)
-                             .map(user -> new UserDto(user.getId(), user.getUsername(), user.getAge()));
+                             .map(user -> new UserDto(user.getId(), user.getUsername(), user.getAge(),
+                                                      mapRolesDto(user)));
     }
 
     @Override
@@ -73,12 +81,21 @@ public class UserServiceImpl implements UserService {
                 userDto.getId(),
                 userDto.getUsername(),
                 passwordEncoder.encode(userDto.getPassword()),
-                userDto.getAge());
+                userDto.getAge(),
+                userDto.getRoles().stream()
+                       .map(roleDto -> roleRepository.getOne(roleDto.getId()))
+                       .collect(Collectors.toSet()));
         userRepository.save(user);
     }
 
     @Override
     public void deleteById(Long id) {
         userRepository.deleteById(id);
+    }
+
+    private static Set<RoleDto> mapRolesDto(User user) {
+        return user.getRoles().stream()
+                   .map(role -> new RoleDto(role.getId(), role.getName()))
+                   .collect(Collectors.toSet());
     }
 }

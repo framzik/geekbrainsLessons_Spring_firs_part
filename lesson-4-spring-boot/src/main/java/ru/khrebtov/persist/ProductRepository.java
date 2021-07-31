@@ -17,5 +17,4 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             "(p.cost<:maxCost or :maxCost is null )")
     List<Product> filterProduct(@Param("minCost") Integer minCost,
                                 @Param("maxCost") Integer maxCost);
-
 }
