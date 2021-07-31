@@ -35,8 +35,8 @@ public class SecurityConfig {
             http
                     .authorizeRequests()
                     .antMatchers("/**/*.css", "/**/*.js").permitAll()
-                    .antMatchers("/product/**").permitAll()
-                    .antMatchers("/user/**").hasRole("ADMIN")
+                    .antMatchers("/product/**", "/user/registration", "/user/new").permitAll()
+                    .antMatchers("/user/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                     .antMatchers("/access_denied").authenticated()
                     .and()
                     .formLogin()

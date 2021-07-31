@@ -40,12 +40,53 @@ public class UserController {
         return "users";
     }
 
+    @GetMapping("/registration")
+    public String registrationForm(Model model) {
+        logger.info("New user register requested");
+
+        model.addAttribute("user", new UserDto());
+
+        model.addAttribute("roles", roleRepository.findAll().stream()
+                                                  .filter(role -> role.getName().equals("ROLE_GUEST"))
+                                                  .map(role -> new RoleDto(role.getId(), role.getName()))
+                                                  .collect(Collectors.toList()));
+
+        return "user_registration";
+    }
+
     @GetMapping("/new")
     public String newUserForm(Model model) {
         logger.info("New user page requested");
 
         model.addAttribute("user", new UserDto());
+        model.addAttribute("roles", roleRepository.findAll().stream()
+                                                  .map(role -> new RoleDto(role.getId(), role.getName()))
+                                                  .collect(Collectors.toList()));
+
         return "user_form";
+    }
+
+    @PostMapping("/new")
+    public String create(@Valid @ModelAttribute("user") UserDto user, BindingResult result, Model model) {
+        logger.info("Create user");
+
+        if (result.hasErrors()) {
+            model.addAttribute("roles", roleRepository.findAll().stream()
+                                                      .map(role -> new RoleDto(role.getId(), role.getName()))
+                                                      .collect(Collectors.toList()));
+            return "user_registration";
+        }
+
+        if (!user.getPassword().equals(user.getRepeatPassword())) {
+            model.addAttribute("roles", roleRepository.findAll().stream()
+                                                      .map(role -> new RoleDto(role.getId(), role.getName()))
+                                                      .collect(Collectors.toList()));
+            result.rejectValue("password", "", "Repeated password is not correct");
+            return "user_registration";
+        }
+
+        userService.save(user);
+        return "redirect:/product";
     }
 
     @GetMapping("/{id}")
