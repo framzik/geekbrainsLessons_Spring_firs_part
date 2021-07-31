@@ -54,17 +54,23 @@ public class UserController {
     }
 
     @PostMapping
-    public String update(@Valid UserDto user, BindingResult result) {
+    public String update(@Valid @ModelAttribute("user") UserDto user, BindingResult result, Model model) {
         logger.info("Saving user");
 
         if (result.hasErrors()) {
             return "user_form";
         }
 
-        if (!user.getRepeatPassword().equals(user.getPassword())) {
-            result.rejectValue("password", "Password and repeat password do not match!");
+        if (!user.getPassword().equals(user.getRepeatPassword())) {
+            result.rejectValue("password", "", "Repeated password is not correct");
+
             return "user_form";
         }
+
+//        if (user.getAge() > 25) {
+//            result.rejectValue("age", "", "Error message");
+//            return "user_form";
+//        }
 
         userService.save(user);
         return "redirect:/user";
