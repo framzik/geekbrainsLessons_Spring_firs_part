@@ -1,21 +1,21 @@
 package ru.khrebtov.service;
 
 import org.springframework.data.domain.Page;
+import ru.khrebtov.controller.UserDto;
 import ru.khrebtov.controller.UserListParams;
-import ru.khrebtov.persist.User;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
 
-    List<User> findAll();
+    List<UserDto> findAll();
 
-    Page<User> findWithFilter(UserListParams userListParams);
+    Page<UserDto> findWithFilter(UserListParams userListParams);
 
-    Optional<User> findById(Long id);
+    Optional<UserDto> findById(Long id);
 
-    void save(User user);
+    void save(UserDto user);
 
     void deleteById(Long id);
 }

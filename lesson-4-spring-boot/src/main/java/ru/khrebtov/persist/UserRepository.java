@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
@@ -14,11 +15,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     List<User> findByUsernameStartsWith(String prefix);
 
     @Query("select u " +
-            "from User u " +
-            "where ( u.username like CONCAT(:prefix, '%') or :prefix is null ) and " +
-            "( u.age >= :minAge or :minAge is null ) and " +
-            "( u.age <= :maxAge or :maxAge is null )")
+                   "from User u " +
+                   "where ( u.username like CONCAT(:prefix, '%') or :prefix is null ) and " +
+                   "( u.age >= :minAge or :minAge is null ) and " +
+                   "( u.age <= :maxAge or :maxAge is null )")
     List<User> filterUsers(@Param("prefix") String prefix,
                            @Param("minAge") Integer minAge,
                            @Param("maxAge") Integer maxAge);
+
+    @Query("select distinct u " +
+            "from User u " +
+            "left join fetch u.roles " +
+            "where u.username = :username")
+    Optional<User> findByUsername(@Param("username") String username);
 }

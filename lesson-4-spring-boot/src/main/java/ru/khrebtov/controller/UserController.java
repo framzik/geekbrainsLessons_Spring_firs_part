@@ -9,10 +9,11 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
-import ru.khrebtov.persist.User;
+import ru.khrebtov.persist.RoleRepository;
 import ru.khrebtov.service.UserService;
 
 import javax.validation.Valid;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/user")
@@ -22,9 +23,12 @@ public class UserController {
 
     private final UserService userService;
 
+    private final RoleRepository roleRepository;
+
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, RoleRepository roleRepository) {
         this.userService = userService;
+        this.roleRepository = roleRepository;
     }
 
     @GetMapping
@@ -36,12 +40,53 @@ public class UserController {
         return "users";
     }
 
+    @GetMapping("/registration")
+    public String registrationForm(Model model) {
+        logger.info("New user register requested");
+
+        model.addAttribute("user", new UserDto());
+
+        model.addAttribute("roles", roleRepository.findAll().stream()
+                                                  .filter(role -> role.getName().equals("ROLE_GUEST"))
+                                                  .map(role -> new RoleDto(role.getId(), role.getName()))
+                                                  .collect(Collectors.toList()));
+
+        return "user_registration";
+    }
+
     @GetMapping("/new")
     public String newUserForm(Model model) {
         logger.info("New user page requested");
 
-        model.addAttribute("user", new User());
+        model.addAttribute("user", new UserDto());
+        model.addAttribute("roles", roleRepository.findAll().stream()
+                                                  .map(role -> new RoleDto(role.getId(), role.getName()))
+                                                  .collect(Collectors.toList()));
+
         return "user_form";
+    }
+
+    @PostMapping("/new")
+    public String create(@Valid @ModelAttribute("user") UserDto user, BindingResult result, Model model) {
+        logger.info("Create user");
+
+        if (result.hasErrors()) {
+            model.addAttribute("roles", roleRepository.findAll().stream()
+                                                      .map(role -> new RoleDto(role.getId(), role.getName()))
+                                                      .collect(Collectors.toList()));
+            return "user_registration";
+        }
+
+        if (!user.getPassword().equals(user.getRepeatPassword())) {
+            model.addAttribute("roles", roleRepository.findAll().stream()
+                                                      .map(role -> new RoleDto(role.getId(), role.getName()))
+                                                      .collect(Collectors.toList()));
+            result.rejectValue("password", "", "Repeated password is not correct");
+            return "user_registration";
+        }
+
+        userService.save(user);
+        return "redirect:/product";
     }
 
     @GetMapping("/{id}")
@@ -49,15 +94,29 @@ public class UserController {
         logger.info("Edit user page requested");
 
         model.addAttribute("user", userService.findById(id)
-                .orElseThrow(() -> new NotFoundException("User not found")));
+                                              .orElseThrow(() -> new NotFoundException("User not found")));
+        model.addAttribute("roles", roleRepository.findAll().stream()
+                                                  .map(role -> new RoleDto(role.getId(), role.getName()))
+                                                  .collect(Collectors.toList()));
         return "user_form";
     }
 
     @PostMapping
-    public String update(@Valid User user, BindingResult result) {
+    public String update(@Valid @ModelAttribute("user") UserDto user, BindingResult result, Model model) {
         logger.info("Saving user");
 
         if (result.hasErrors()) {
+            model.addAttribute("roles", roleRepository.findAll().stream()
+                                                      .map(role -> new RoleDto(role.getId(), role.getName()))
+                                                      .collect(Collectors.toList()));
+            return "user_form";
+        }
+
+        if (!user.getPassword().equals(user.getRepeatPassword())) {
+            model.addAttribute("roles", roleRepository.findAll().stream()
+                                                      .map(role -> new RoleDto(role.getId(), role.getName()))
+                                                      .collect(Collectors.toList()));
+            result.rejectValue("password", "", "Repeated password is not correct");
             return "user_form";
         }
 
