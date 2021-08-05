@@ -2,6 +2,7 @@ package ru.khrebtov.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import ru.khrebtov.controller.NotFoundException;
 import ru.khrebtov.controller.UserDto;
@@ -37,6 +38,7 @@ public class UserResource {
                           .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
+    @Secured("ROLE_ADMIN")
     @PostMapping(produces = "application/json")
     public UserDto create(@RequestBody UserDto user) {
         if (user.getId() != null) {
@@ -46,6 +48,7 @@ public class UserResource {
         return user;
     }
 
+    @Secured("ROLE_ADMIN")
     @PutMapping(produces = "application/json")
     public void update(@RequestBody UserDto user) {
         if (user.getId() == null) {
@@ -54,6 +57,7 @@ public class UserResource {
         userService.save(user);
     }
 
+    @Secured("ROLE_ADMIN")
     @DeleteMapping(path = "/{id}", produces = "application/json")
     public void delete(@PathVariable("id") Long id) {
         userService.deleteById(id);

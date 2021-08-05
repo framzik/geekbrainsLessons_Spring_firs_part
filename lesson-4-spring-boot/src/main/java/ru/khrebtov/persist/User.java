@@ -1,9 +1,6 @@
 package ru.khrebtov.persist;
 
 import javax.persistence.*;
-
-import javax.persistence.*;
-import java.util.List;
 import java.util.Set;
 
 @Entity
